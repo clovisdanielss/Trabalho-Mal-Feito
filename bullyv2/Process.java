@@ -25,14 +25,14 @@ public class Process extends Thread{
 	
 	@Override
 	public void run(){
-		
+		checkWhoIsTheBoss();
 	}
 	
 	public void checkWhoIsTheBoss(){
 		Data boss = myTable.get(myTable.size() - 1);
 		if(Integer.valueOf(boss.getId()) == pid){
 			System.out.println("I AM THE BOSS!!! ");
-			//send();
+			send();
 		}
 		else{
 			System.out.println("Senpai "+ boss.getIp() + " is the boss...");
@@ -41,9 +41,13 @@ public class Process extends Thread{
 		try {
 			server.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+
+	private void send() {
+		
 	}
 
 

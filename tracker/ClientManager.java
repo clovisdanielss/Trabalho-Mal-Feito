@@ -78,7 +78,7 @@ public class ClientManager extends Thread{
 	private void sendMensage(OutputStream out, Socket socket) throws IOException {
 
 		String msg = "i"+ socket.getInetAddress().getHostAddress()
-				+"p"+ socket.getPort() + ";";
+				+"p"+ ((int)socket.getPort() + 1) + ";";
 		out.write(msg.getBytes());			
 	}
 }

@@ -22,19 +22,11 @@ public class MainClient {
 			client.table.get(i).setId(new Integer(i + 1).toString());
 		}
 		
-		@SuppressWarnings("unused")
 		Data myData = Data.myData(client.socket.getInetAddress().getHostAddress(),
-				String.valueOf(client.socket.getLocalPort()), client.table);
-		
-		/** Treta ocorre se tirar isso...
-		 * 
-		 * 
-		client.socket.close();		
-		client.socket = null;
-		System.gc();
-		
+				String.valueOf(client.socket.getLocalPort() + 1), client.table);		
+
 		try {
-			new Process(myData.getId(), client.table);
+			new Process(myData.getId(), client.table).start();
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -45,7 +37,6 @@ public class MainClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		**/
 		
 	}
 }
