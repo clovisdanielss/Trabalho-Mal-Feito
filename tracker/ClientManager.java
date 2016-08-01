@@ -41,7 +41,7 @@ public class ClientManager extends Thread{
 		for(Socket socket : tracker.clients){
 			try {
 				sendMensage(this.client.getOutputStream(),socket);
-;
+				sendingSelf(this.client.getOutputStream(), socket);;
 			}
 			catch (IOException e) {
 				System.err.println("Erro Na Conexao!");
@@ -81,4 +81,11 @@ public class ClientManager extends Thread{
 				+"p"+ ((int)socket.getPort() + 1) + ";";
 		out.write(msg.getBytes());			
 	}
+	private void sendingSelf(OutputStream out, Socket socket) throws IOException {
+		if(socket.equals(client)){
+			String msg = "s"+ socket.getInetAddress().getHostAddress() + "!";
+			out.write(msg.getBytes());
+		}			
+	}
+
 }

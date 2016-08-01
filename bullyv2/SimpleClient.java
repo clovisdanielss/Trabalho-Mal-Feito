@@ -7,12 +7,14 @@ import java.util.ArrayList;
 
 public class SimpleClient {
 
+	public String myIp;
 	public ArrayList<Data> table;
 	public int totalConnections;
 	public Socket socket;
 	public boolean loop = true;
 
 	public SimpleClient(int totalConnections) {
+		myIp = "";
 
 		this.totalConnections = totalConnections;
 		
@@ -24,7 +26,7 @@ public class SimpleClient {
 		
 		//Ao gerar o Jar mude para o IP do camarada e a porta
 		try {
-			socket = new Socket("localhost", 9799);
+			socket = new Socket("10.0.0.1", 9799);
 			
 			if (socket.isConnected()) {
 				new Sender(this).start();
@@ -58,7 +60,8 @@ public class SimpleClient {
 		int ipMark = 0;
 		int portMark = 0;
 		int lastMark = 0;
-		
+		int selfMark = 0;
+		int endSelfMark = 0;
 		
 		for (int i = 0; i < msg.length(); i++) {
 			if (msg.charAt(i) == 'i') {
@@ -66,6 +69,13 @@ public class SimpleClient {
 			}
 			if (msg.charAt(i) == 'p'){
 				portMark = i;
+			}
+			if (msg.charAt(i) == 's'){
+				selfMark = i;
+			}
+			if (msg.charAt(i) == '!'){
+				endSelfMark = i;
+				myIp = msg.substring(selfMark + 1,endSelfMark);
 			}
 			if(msg.charAt(i) == ';'){
 				

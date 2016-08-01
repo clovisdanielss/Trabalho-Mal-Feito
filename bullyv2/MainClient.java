@@ -11,19 +11,19 @@ public class MainClient {
 		int nC = scan.nextInt();
 		SimpleClient client = new SimpleClient(nC);
 		
-		System.out.print("Eu sou "+ client.socket.getInetAddress().getHostAddress() +
+		System.out.print("Eu sou "+ client.myIp +
 				":" + client.socket.getLocalPort() + ":\n\n");
 		
 		
 		System.out.println("List :");
 		for(int i = 0; i < client.table.size(); i++){
-			System.out.println("ip: " + client.table.get(i).getIp());
-			System.out.println("port: " + client.table.get(i).getPort());
+			System.out.println("ip: " + client.table.get(i).getIp()+";");
+			System.out.println("port: " + client.table.get(i).getPort()+";");
 			client.table.get(i).setId(new Integer(i + 1).toString());
 		}
 		
-		Data myData = Data.myData(client.socket.getInetAddress().getHostAddress(),
-				String.valueOf(client.socket.getLocalPort() + 1), client.table);		
+		Data myData = Data.myData(client.myIp,String.valueOf(client.socket.getLocalPort() + 1),
+				client.table);		
 
 		try {
 			new Process(myData.getId(), client.table).start();
@@ -36,7 +36,7 @@ public class MainClient {
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} 
 		
 	}
 }
