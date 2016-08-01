@@ -32,10 +32,11 @@ public class Process extends Thread{
 		Data boss = myTable.get(myTable.size() - 1);
 		if(Integer.valueOf(boss.getId()) == pid){
 			System.out.println("I AM THE BOSS!!! ");
-			send();
+			
 		}
 		else{
-			System.out.println("Senpai "+ boss.getIp() + " is the boss...");
+			System.out.println("Senpai "+ boss.getIp()+":"+boss.getPort() + " is the boss...");
+			send();
 		}
 		
 		try {
