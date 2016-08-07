@@ -51,6 +51,14 @@ public class Data {
 		return null;
 	}
 	
+	public static Data myData(String ip,ArrayList <Data> data){
+		for(Data d :data){
+			if(d.getIp().equals(ip))
+				return d;
+		}
+		return null;
+	}
+	
 	public static Data myData(int pid, ArrayList <Data> data){
 		for(Data d :data){
 			if(d.getId().equals(Integer.toString(pid)))

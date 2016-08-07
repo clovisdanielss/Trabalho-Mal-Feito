@@ -12,7 +12,7 @@ public class Sender extends Thread {
 
 	@Override
 	public void run() {
-		while(client.loop){
+		while(client.getLoop()){
 			try {
 				sleep(1000);
 				if(sendMensage())
@@ -25,20 +25,20 @@ public class Sender extends Thread {
 	}
 	
 	public boolean sendMensage() throws IOException, InterruptedException{
-		if(client.table.size() == client.totalConnections){
+		if(client.getTable().size() == client.getTotalConnections()){
 			sleep(3000);
 			
-			client.socket.getOutputStream().write("close".getBytes());
+			client.getSocket().getOutputStream().write("close".getBytes());
 			
-			client.loop = false;
+			client.setLoop(false);
 			
-			client.socket.close();
+			client.getSocket().close();
 			
 			return true;
 			
 		}
 		else{
-			client.socket.getOutputStream().write("ok".getBytes());
+			client.getSocket().getOutputStream().write("ok".getBytes());
 			return false;
 		}
 		

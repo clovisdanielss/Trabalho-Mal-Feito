@@ -7,14 +7,18 @@ import java.util.ArrayList;
 
 public class SimpleClient {
 
-	public String myIp;
-	public ArrayList<Data> table;
-	public int totalConnections;
-	public Socket socket;
-	public boolean loop = true;
+	private String myIp;
+	private ArrayList<Data> table;
+	private int totalConnections;
+	private Socket socket;
+	private boolean loop;
+	
+
 
 	public SimpleClient(int totalConnections) {
-		myIp = "";
+		loop = true;
+		
+		setMyIp("");
 
 		this.totalConnections = totalConnections;
 		
@@ -26,7 +30,7 @@ public class SimpleClient {
 		
 		//Ao gerar o Jar mude para o IP do camarada e a porta
 		try {
-			socket = new Socket("10.0.0.1", 9799);
+			socket = new Socket("localhost", 9799);
 			
 			if (socket.isConnected()) {
 				new Sender(this).start();
@@ -75,7 +79,7 @@ public class SimpleClient {
 			}
 			if (msg.charAt(i) == '!'){
 				endSelfMark = i;
-				myIp = msg.substring(selfMark + 1,endSelfMark);
+				setMyIp(msg.substring(selfMark + 1,endSelfMark));
 			}
 			if(msg.charAt(i) == ';'){
 				
@@ -98,5 +102,31 @@ public class SimpleClient {
 		return loop;
 	}
 
+	public String getMyIp() {
+		return myIp;
+	}
 
+	public void setMyIp(String myIp) {
+		this.myIp = myIp;
+	}
+
+	public ArrayList<Data> getTable(){
+		return table;
+	}
+	
+	public Socket getSocket(){
+		return socket;
+	}
+	
+	public boolean getLoop(){
+		return loop;
+	}
+	
+	public void setLoop(boolean b){
+		loop = b;
+	}
+	
+	public int getTotalConnections(){
+		return totalConnections;
+	}
 }

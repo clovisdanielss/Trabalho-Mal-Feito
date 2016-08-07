@@ -11,22 +11,23 @@ public class MainClient {
 		int nC = scan.nextInt();
 		SimpleClient client = new SimpleClient(nC);
 		
-		System.out.print("Eu sou "+ client.myIp +
-				":" + client.socket.getLocalPort() + ":\n\n");
+		System.out.print("Eu sou "+ client.getMyIp() +
+				":" + new Integer(client.getSocket().getLocalPort() + 1) + ":\n\n");
 		
 		
 		System.out.println("List :");
-		for(int i = 0; i < client.table.size(); i++){
-			System.out.println("ip: " + client.table.get(i).getIp()+";");
-			System.out.println("port: " + client.table.get(i).getPort()+";");
-			client.table.get(i).setId(new Integer(i + 1).toString());
+		for(int i = 0; i < client.getTable().size(); i++){
+			System.out.println("ip: " + client.getTable().get(i).getIp()+";");
+			System.out.println("port: " + client.getTable().get(i).getPort()+";");
+			client.getTable().get(i).setId(new Integer(i + 1).toString());
 		}
+		System.out.println("\n");
 		
-		Data myData = Data.myData(client.myIp,String.valueOf(client.socket.getLocalPort() + 1),
-				client.table);		
+		Data myData = Data.myData(client.getMyIp(),String.valueOf(client.getSocket().getLocalPort() + 1),
+				client.getTable());		
 
 		try {
-			new Process(myData.getId(), client.table).start();
+			new Process(myData.getId(), client.getTable()).start();
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
