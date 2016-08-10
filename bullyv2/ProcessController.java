@@ -1,4 +1,4 @@
-package bullyv2;
+package bullyv1;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -29,8 +29,10 @@ public class ProcessController extends Thread{
 		
 		// Fim da escuta, fecha o socket.
 		try {
+
 			listen();
 			client.close();
+		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -71,52 +73,50 @@ public class ProcessController extends Thread{
 			// Retorno Ok para o camarada. Caso "send"			
 			Data serverData = Data.myData(Integer.valueOf(pID), table);
 			try {
-				System.out.println("Mandando Mensagem Para : " + serverData.getIp() + ": "+ serverData.getPort());
+				System.out.println(":> " +"Mandando ACK Para : " + serverData.getIp() + ": "+ serverData.getPort());
 				
 				//PROBLEMA CASO HAJA IP'S IGUAIS, DEVO PROCURAR PELO PID
 				
 				Socket socket = new Socket(serverData.getIp(), Integer.valueOf(serverData.getPort()));
 				
-				socket.getOutputStream().write(("(O"+ String.valueOf(pid) +")").getBytes());
+				if(myProcess.isBoss())
+					socket.getOutputStream().write(("(O"+ String.valueOf(pid) +")").getBytes());
 				
 				socket.close();
 				
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 			
-			myProcess.setfLoop(false);
+			myProcess.setIsBoss(true);
 		}
 		if(msgRcv.equals("?")){
 			// Retorno Ok para o camarada. Caso "election"
 			Data serverData = Data.myData(Integer.valueOf(pID), table);
 			try {
-				System.out.println(":> Mandando Mensagem Para : " + serverData.getIp() + ": "+ serverData.getPort());
+				System.out.println(":> Mandando BULLY Para : " + serverData.getIp() + ": "+ serverData.getPort());
 				
 				//PROBLEMA CASO HAJA IP'S IGUAIS, DEVO PROCURAR PELO PID
 				
 				Socket socket = new Socket(serverData.getIp(), Integer.valueOf(serverData.getPort()));
 				
-				socket.getOutputStream().write(("(N"+ String.valueOf(pid) +")").getBytes());
-				
+				if(!myProcess.isBoss())
+					socket.getOutputStream().write(("(N"+ String.valueOf(pid) +")").getBytes());
+				else{
+					socket.getOutputStream().write(("(b"+ String.valueOf(pid) +")").getBytes());
+				}
 				socket.close();
 				
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}	
 			
 		}
@@ -126,36 +126,40 @@ public class ProcessController extends Thread{
 				Data serverData = Data.myData(Integer.valueOf(pID), table);
 				System.out.println(":> O Boss eh :" + serverData.getIp() + ": "+ serverData.getPort());
 				
+				myProcess.setKeepAlive(true);
+				
 				client.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 		if(msgRcv.equals("N")){
 			try {
 				Data serverData = Data.myData(Integer.valueOf(pID), table);
-				System.out.println(":>" + serverData.getIp() + ": "+ serverData.getPort() + 
+				System.out.println(":> " + serverData.getIp() + ": "+ serverData.getPort() + 
 						"  Me Avisou que NAO sou o novo boss");
-				
+				myProcess.setElectionACK(true);
 				client.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 			// Descobre que não é o novo chefe.
 		}
 		if(msgRcv.equals("b")){
 			try {
 				Data serverData = Data.myData(Integer.valueOf(pID), table);
-				System.out.println(":> O Boss eh : " + serverData.getIp() + ": "+ serverData.getPort());
+				System.out.println(":> O novo boss : " + serverData.getIp() + ": "+ serverData.getPort() + " me espancou");
+				
+				if(myProcess.isBoss())
+					myProcess.setIsBoss(false);
+				
+				myProcess.setElectionACK(true);
 				
 				myProcess.setBoss(serverData);
 				
 				client.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 		

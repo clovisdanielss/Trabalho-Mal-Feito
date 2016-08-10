@@ -1,4 +1,4 @@
-package bullyv2;
+package bullyv1;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -8,16 +8,16 @@ import java.net.Socket;
  * */
 public class ProcessManager extends Thread{
 	
-	private Process p;
+	private Process myProcess;
 	private String msg;
 	
 	public ProcessManager(Process process){
-		p = process;
+		myProcess = process;
 		msg  = null;
 	}
 	
 	public ProcessManager(Process process, String msg){
-		p = process;
+		myProcess = process;
 		this.msg = msg;
 	}
 	
@@ -26,18 +26,17 @@ public class ProcessManager extends Thread{
 	public void run(){
 		while(true){
 			try {
-				System.out.println("Em Aguardo...");
-				Socket client = p.getServer().accept();
-				new ProcessController(client,msg,p).start();
+				//myProcess.checkProcess();
+				Socket client = myProcess.getServer().accept();
+				new ProcessController(client,msg,myProcess).start();
 
 			} 
 			catch (IOException e) {
-				e.printStackTrace();
-				System.out.println();
-				break;
 			}
 			
 		}
 	}
-
+	
+	
+	
 }

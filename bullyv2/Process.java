@@ -1,10 +1,13 @@
-package bullyv2;
+package bullyv1;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
+
+import javax.management.monitor.Monitor;
 
 public class Process extends Thread{
 	
@@ -12,7 +15,11 @@ public class Process extends Thread{
 	private ServerSocket server;
 	private int pid;
 	private Data boss;
-	private boolean fBoss, fLoop;
+	private boolean isBoss;
+	private boolean keepAlive;
+	private boolean isDown;
+	private boolean electionACK;
+	private Semaphore mutex;
 	
 	public Data getBoss(){
 		return boss;
@@ -23,9 +30,11 @@ public class Process extends Thread{
 	}
 	
 	public Process(String pid, ArrayList<Data> table) throws NumberFormatException, IOException, InterruptedException{
-		fLoop = true;
+		mutex = new Semaphore(1);
 		
-		fBoss = false;
+		isDown = false;
+		
+		isBoss = false;
 		
 		sleep(1000);
 		
@@ -39,112 +48,183 @@ public class Process extends Thread{
 		boss = myTable.get(myTable.size() - 1);
 		
 		new ProcessManager(this).start();
+		new ProcessBreaker(this).start();
+
 	}
 	
 	
 	@Override
 	public void run(){
-		checkWhoIsTheBoss();
+		try {
+			checkWhoIsTheBoss();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
-	private void checkWhoIsTheBoss(){
+	private void checkWhoIsTheBoss() throws InterruptedException{
 		
 		if(Integer.valueOf(boss.getId()) == pid){
 			System.out.println("I AM THE BOSS!!! ");
-			fBoss = true;
+			isBoss = true;
+			while(isBoss){
+				//TODO Condicoes de queda...
+			}
 		}
 		else{
 			System.out.println("Senpai "+ boss.getIp()+":"+boss.getPort() + " is the boss...");
 			while(true){
-				if(!send())
-					election(true,boss);
-				if(!fLoop)
-					break;
-			}
-			
-		}
-		
-		System.out.println("Só lembrando...");
-// No final de tudo...
-//		try {
-//			server.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-	}
-
-
-	private void election(boolean election, Data boss) {
-		
-		if(election){
-			myTable.remove(boss);
-			for(Data process: myTable){
-				if(Integer.valueOf(process.getId()) > getpID())
-					try {
-						sleep(1000);
-						
-						Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
-						
-						System.out.println("Mandando Mensagem Para : " + process.getIp() + ":"+ process.getPort());
-						
-						socket.getOutputStream().write(("(?"+ new Integer(getpID()) +")").getBytes());
-									
-						socket.close();
-						
-					} catch (NumberFormatException e) {
-					} catch (UnknownHostException e) {
-					} catch (IOException e) {
-					} catch (InterruptedException e) {
-					}	
-				
-			}
-			
-			if(pid == myTable.size()){
-				if(fBoss == false)
-					System.out.println("I AM THE NEW BOSS!");
-				fBoss = true;
-				for(Data process: myTable){
-					if(Integer.valueOf(process.getId()) != getpID())
-						try {
-							sleep(1000);
-							
-							Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
-							
-							socket.getOutputStream().write(("(b"+ new Integer(getpID()) +")").getBytes());
-										
-							socket.close();
-							
-						} catch (NumberFormatException e) {
-						} catch (UnknownHostException e) {
-						} catch (IOException e) {
-						} catch (InterruptedException e) {
-						}	
-					
+				if(!send() && !isBoss){
+					//System.out.println("@@@Teste@@@");
+					election(boss);
 				}
 			}
 			
-			
-			
+		}
+		// No final de tudo...
+		//waitToClose();
+		
+		try {
+			server.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 
-	private boolean reply() {
-		return false;
+	public synchronized void checkProcess() throws InterruptedException{
+		while(isDown())
+			wait();
+		
+	}
+
+	
+	public synchronized void waitToDown() throws InterruptedException, IOException {
+		// TODO Da uma olhada nesse tempo depois...
+		// Lembra que se vc comentar a run do breaker, funciona tudo...
+		
+		wait((long)(Math.random()*10000));
+		
+		if(Math.random()*100 > 75){
+			//System.out.println("Going to change State :");
+			
+			if(isDown == true){
+				System.out.println(":> Going Up");
+				isDown = false;
+				//criar server
+				Data myData = Data.myData(this.pid, myTable);
+				server = new ServerSocket(Integer.valueOf(myData.getPort()));
+				setIsBoss(false);
+				election(boss);
+				
+			}
+			else if(isDown == false){
+				System.out.println(":> Going Down");
+				isDown = true;
+				setIsBoss(false);
+				// fechar server;
+				server.close();
+			}
+		}
+		
+		notifyAll();
+	}
+
+	private synchronized void election(Data boss) {
+		
+		
+		setElectionACK(false);
+		
+		try {
+			wait(2000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		System.out.println(":> " +"Iniciando eleicao...");
+		
+		for(Data process: myTable){
+			if(Integer.valueOf(process.getId()) > getpID())
+				try {
+					
+					Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
+					
+					System.out.println(":> " +"Mandando Eleicao Para : " + process.getIp() + ":"+ process.getPort());
+					
+					socket.getOutputStream().write(("(?"+ new Integer(getpID()) +")").getBytes());
+								
+					socket.close();
+					
+				} catch (NumberFormatException e) {
+				} catch (UnknownHostException e) {
+				} catch (IOException e) {
+				}	
+		}
+		
+		try {
+			//Espera por resposta de alguem...
+			wait(1000);
+			
+			if(isElectionACK()){
+			//Espera pela msg do coordenador novo, se nao vinher ele vai repetir a eleicao
+				
+			}
+			else{
+			// Avisa que ele é o eleito...
+				if(!isBoss)
+					System.out.println("I'm the Boss!");
+				setIsBoss(true);
+				for(Data process: myTable){
+					if(Integer.valueOf(process.getId()) < getpID()){
+						Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
+						
+						System.out.println(":> " +"Mandando Eleito Para : " + process.getIp() + ":"+ process.getPort());
+						
+						socket.getOutputStream().write(("(b"+ new Integer(getpID()) +")").getBytes());
+									
+						socket.close();
+					}
+				}
+				
+			}
+		} catch (InterruptedException | NumberFormatException | IOException e) {
+		}
+		
+		
+		
+		
 	}
 
 
-	private boolean send() {
+
+
+	private synchronized boolean send() {
+		if(!isDown && !isBoss)
 		try {
-			sleep(3000);
+			
+			setKeepAlive(false);
 			
 			Socket socket = new Socket(boss.getIp(), Integer.valueOf(boss.getPort()));
 			
-			System.out.println("Mandando Mensagem Para : " + boss.getIp() + ":"+ boss.getPort());
+			System.out.println(":> " +"Mandando Mensagem Para : " + boss.getIp() + ":"+ boss.getPort());
 			
 			socket.getOutputStream().write(("(!"+ new Integer(getpID()) +")").getBytes());
 						
 			socket.close();
+			
+			sleep(2000);
+			
+			if(keepAlive){
+				//System.out.println("ACK recebido...");
+				return true;
+			}
+			else{
+				//System.out.println("ACK nao recebido recebido...");
+				return false;
+			}
+			
 			
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
@@ -186,12 +266,44 @@ public class Process extends Thread{
 		return server;
 	}
 
-	public boolean isfLoop() {
-		return fLoop;
+	public boolean isBoss() {
+		return isBoss;
 	}
 
-	public void setfLoop(boolean fLoop) {
-		this.fLoop = fLoop;
+	public void setIsBoss(boolean fLoop) {
+		this.isBoss = fLoop;
+	}
+
+	public Semaphore getMutex() {
+		return mutex;
+	}
+
+	public void setMutex(Semaphore mutex) {
+		this.mutex = mutex;
+	}
+
+	public boolean isKeepAlive() {
+		return keepAlive;
+	}
+
+	public void setKeepAlive(boolean keepAlive) {
+		this.keepAlive = keepAlive;
+	}
+
+	public boolean isDown() {
+		return isDown;
+	}
+
+	public void setDown(boolean isDown) {
+		this.isDown = isDown;
+	}
+
+	public boolean isElectionACK() {
+		return electionACK;
+	}
+
+	public void setElectionACK(boolean election) {
+		this.electionACK = election;
 	}
 
 }
