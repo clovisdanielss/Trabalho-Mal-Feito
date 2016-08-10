@@ -68,22 +68,17 @@ public class Process extends Thread{
 		if(Integer.valueOf(boss.getId()) == pid){
 			System.out.println("I AM THE BOSS!!! ");
 			isBoss = true;
-			while(isBoss){
-				//TODO Condicoes de queda...
-			}
+			while(isBoss){}
 		}
 		else{
 			System.out.println("Senpai "+ boss.getIp()+":"+boss.getPort() + " is the boss...");
 			while(true){
 				if(!send() && !isBoss){
-					//System.out.println("@@@Teste@@@");
 					election(boss);
 				}
 			}
 			
 		}
-		// No final de tudo...
-		//waitToClose();
 		
 		try {
 			server.close();
@@ -92,22 +87,12 @@ public class Process extends Thread{
 		}
 	}
 
-
-	public synchronized void checkProcess() throws InterruptedException{
-		while(isDown())
-			wait();
-		
-	}
-
 	
 	public synchronized void waitToDown() throws InterruptedException, IOException {
-		// TODO Da uma olhada nesse tempo depois...
-		// Lembra que se vc comentar a run do breaker, funciona tudo...
 		
 		wait((long)(Math.random()*10000));
 		
 		if(Math.random()*100 > 75){
-			//System.out.println("Going to change State :");
 			
 			if(isDown == true){
 				System.out.println(":> Going Up");
@@ -143,56 +128,57 @@ public class Process extends Thread{
 			e1.printStackTrace();
 		}
 		
-		System.out.println(":> " +"Iniciando eleicao...");
-		
-		for(Data process: myTable){
-			if(Integer.valueOf(process.getId()) > getpID())
-				try {
-					
-					Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
-					
-					System.out.println(":> " +"Mandando Eleicao Para : " + process.getIp() + ":"+ process.getPort());
-					
-					socket.getOutputStream().write(("(?"+ new Integer(getpID()) +")").getBytes());
-								
-					socket.close();
-					
-				} catch (NumberFormatException e) {
-				} catch (UnknownHostException e) {
-				} catch (IOException e) {
-				}	
-		}
-		
-		try {
-			//Espera por resposta de alguem...
-			wait(1000);
+		if(!isDown){
+			System.out.println(":> " +"Iniciando eleicao...");
 			
-			if(isElectionACK()){
-			//Espera pela msg do coordenador novo, se nao vinher ele vai repetir a eleicao
-				
-			}
-			else{
-			// Avisa que ele é o eleito...
-				if(!isBoss)
-					System.out.println("I'm the Boss!");
-				setIsBoss(true);
-				for(Data process: myTable){
-					if(Integer.valueOf(process.getId()) < getpID()){
+			for(Data process: myTable){
+				if(Integer.valueOf(process.getId()) > getpID())
+					try {
+						
 						Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
 						
-						System.out.println(":> " +"Mandando Eleito Para : " + process.getIp() + ":"+ process.getPort());
+						System.out.println(":> " +"Mandando Eleicao Para : " + process.getIp() + ":"+ process.getPort());
 						
-						socket.getOutputStream().write(("(b"+ new Integer(getpID()) +")").getBytes());
+						socket.getOutputStream().write(("(?"+ new Integer(getpID()) +")").getBytes());
 									
 						socket.close();
-					}
-				}
-				
+						
+					} catch (NumberFormatException e) {
+					} catch (UnknownHostException e) {
+					} catch (IOException e) {
+					}	
 			}
-		} catch (InterruptedException | NumberFormatException | IOException e) {
+			
+			try {
+				//Espera por resposta de alguem...
+				wait(1000);
+				
+				if(isElectionACK()){
+				//Espera pela msg do coordenador novo, se nao vinher ele vai repetir a eleicao
+					
+				}
+				else{
+				// Avisa que ele é o eleito...
+					if(!isBoss)
+						System.out.println("I'm the Boss!");
+					setIsBoss(true);
+					for(Data process: myTable){
+						if(Integer.valueOf(process.getId()) < getpID()){
+							Socket socket = new Socket(process.getIp(), Integer.valueOf(process.getPort()));
+							
+							System.out.println(":> " +"Mandando Eleito Para : " + process.getIp() + ":"+ process.getPort());
+							
+							socket.getOutputStream().write(("(b"+ new Integer(getpID()) +")").getBytes());
+										
+							socket.close();
+						}
+					}
+					
+				}
+			} catch (InterruptedException | NumberFormatException | IOException e) {
+			}
+		
 		}
-		
-		
 		
 		
 	}
@@ -208,13 +194,13 @@ public class Process extends Thread{
 			
 			Socket socket = new Socket(boss.getIp(), Integer.valueOf(boss.getPort()));
 			
-			System.out.println(":> " +"Mandando Mensagem Para : " + boss.getIp() + ":"+ boss.getPort());
+			//System.out.println(":> " +"Mandando Mensagem Para : " + boss.getIp() + ":"+ boss.getPort());
 			
 			socket.getOutputStream().write(("(!"+ new Integer(getpID()) +")").getBytes());
 						
 			socket.close();
 			
-			sleep(2000);
+			wait();
 			
 			if(keepAlive){
 				//System.out.println("ACK recebido...");
@@ -227,13 +213,10 @@ public class Process extends Thread{
 			
 			
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
 			return false;
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			return false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			return false;
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block

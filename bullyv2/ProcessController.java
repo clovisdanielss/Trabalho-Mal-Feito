@@ -34,7 +34,6 @@ public class ProcessController extends Thread{
 			client.close();
 		
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -68,12 +67,12 @@ public class ProcessController extends Thread{
 		}
 	}
 
-	private void checkMensage(String msgRcv, String pID) {
+	private synchronized void checkMensage(String msgRcv, String pID) {
 		if(msgRcv.equals("!")){
 			// Retorno Ok para o camarada. Caso "send"			
 			Data serverData = Data.myData(Integer.valueOf(pID), table);
 			try {
-				System.out.println(":> " +"Mandando ACK Para : " + serverData.getIp() + ": "+ serverData.getPort());
+				//System.out.println(":> " +"Mandando ACK Para : " + serverData.getIp() + ": "+ serverData.getPort());
 				
 				//PROBLEMA CASO HAJA IP'S IGUAIS, DEVO PROCURAR PELO PID
 				
@@ -85,11 +84,8 @@ public class ProcessController extends Thread{
 				socket.close();
 				
 			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
 			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 			}
 			
 			myProcess.setIsBoss(true);
@@ -121,14 +117,16 @@ public class ProcessController extends Thread{
 			
 		}
 		if(msgRcv.equals("O")){
-			// Não vai fazer nada. Caso "read"
 			try {
 				Data serverData = Data.myData(Integer.valueOf(pID), table);
-				System.out.println(":> O Boss eh :" + serverData.getIp() + ": "+ serverData.getPort());
+				//System.out.println(":> O Boss eh :" + serverData.getIp() + ": "+ serverData.getPort());
 				
 				myProcess.setKeepAlive(true);
 				
+				
 				client.close();
+				
+				notifyAll();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 			}
@@ -141,9 +139,7 @@ public class ProcessController extends Thread{
 				myProcess.setElectionACK(true);
 				client.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 			}
-			// Descobre que não é o novo chefe.
 		}
 		if(msgRcv.equals("b")){
 			try {
@@ -159,7 +155,6 @@ public class ProcessController extends Thread{
 				
 				client.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 			}
 		}
 		
